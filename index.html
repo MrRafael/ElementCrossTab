@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<style>
+  #app {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  #element {
+    background: red;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    position: absolute;
+    transition: left 0.001s;
+    transition: top 0.001s;
+  }
+</style>
+
+<body id="app">
+  <div id="element" :style="{left: leftAdjusted + 'px', top: topAdjusted + 'px'}"></div>
+</body>
+<script>
+  const socket = io();
+  const app = Vue.createApp({
+    data() {
+      return {
+        left: 0,
+        top: 0,
+        moveSpeed: 20,
+        leftAdjusted: 0,
+        topAdjusted: 0,
+        isMouseOut: false,
+      }
+    },
+    methods: {
+      pressW() {
+        this.top = Math.max(0, this.top - this.moveSpeed);
+        socket.emit('topChanged', this.top);
+      },
+      pressS() {
+        this.top = Math.min(screen.height - 50, this.top + this.moveSpeed);
+        socket.emit('topChanged', this.top);
+      },
+      pressA() {
+        this.left = Math.max(0, this.left - this.moveSpeed);
+        socket.emit('leftChanged', this.left);
+      },
+      pressD() {
+        this.left = Math.min(screen.width - 50, this.left + this.moveSpeed);
+        socket.emit('leftChanged', this.left);
+      },
+      onKeydown(event) {
+        switch (event.key) {
+          case 'w':
+            this.pressW();
+            break;
+          case 'W':
+            this.pressW();
+            break;
+          case 's':
+            this.pressS();
+            break;
+          case 'S':
+            this.pressS();
+            break;
+          case 'a':
+            this.pressA();
+            break;
+          case 'A':
+            this.pressA();
+            break;
+          case 'd':
+            this.pressD();
+            break;
+          case 'D':
+            this.pressD();
+            break;
+
+          default:
+            break;
+        }
+      },
+    },
+    mounted() {
+      setInterval(() => {
+        this.leftAdjusted = this.left - screenX;
+        this.topAdjusted = this.top - screenY;
+      }, 33);
+      document.addEventListener("keydown", this.onKeydown);
+      this.left = screen.width / 2;
+      this.top = screen.height / 2;
+
+      socket.on('top', (value) => {
+        this.top = value
+      });
+
+      socket.on('left', (value) => {
+        this.left = value
+      });
+    },
+  })
+
+  app.mount('#app')
+</script>
+
+</html>
